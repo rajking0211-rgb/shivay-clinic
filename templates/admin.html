@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage doctors | Shivay Clinic</title>
+    <link rel="stylesheet" href="{{ url_for('stylesheet') }}">
+    <style>
+        body { min-height: 100vh; background: #f4f8f8; color: #102f3d; }
+        .admin-shell { width: min(1120px, calc(100% - 36px)); margin: 36px auto; }
+        .admin-top, .admin-card-heading, .admin-doctor { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+        .admin-top { margin-bottom: 28px; }
+        .admin-top h1 { margin: 0; font: 800 28px Manrope, sans-serif; }
+        .admin-top p { margin: 6px 0 0; color: #607780; }
+        .admin-panel { margin-bottom: 24px; padding: 26px; border: 1px solid #e1ebed; border-radius: 16px; background: white; }
+        .admin-panel h2 { margin: 0 0 16px; font: 700 20px Manrope, sans-serif; }
+        .admin-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+        .admin-form label { display: block; margin: 12px 0 6px; font-weight: 700; }
+        .admin-form input, .admin-form textarea { box-sizing: border-box; width: 100%; padding: 11px; border: 1px solid #d6e2e4; border-radius: 8px; font: inherit; }
+        .admin-form textarea { min-height: 90px; resize: vertical; }
+        .admin-wide { grid-column: 1 / -1; }
+        .admin-help { color: #607780; font-size: 13px; }
+        .admin-button, .admin-link { display: inline-block; padding: 10px 14px; border: 0; border-radius: 8px; background: #087e83; color: white; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .admin-link.secondary { background: #eaf3f3; color: #087e83; }
+        .admin-link.danger { background: #fff0ee; color: #9b3025; }
+        .admin-inline-form { display: inline; }
+        .admin-doctor { padding: 15px 0; border-top: 1px solid #e6eeee; }
+        .admin-doctor-name { font-weight: 700; }
+        .admin-doctor-meta { margin-top: 4px; color: #607780; font-size: 14px; }
+        .admin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .admin-message { margin: 0 0 16px; padding: 12px 14px; border-radius: 8px; background: #e8f7ef; color: #17633e; }
+        .admin-message.error { background: #fff0ee; color: #9b3025; }
+        .admin-current-image { display: block; max-width: 130px; max-height: 100px; margin-top: 8px; border-radius: 8px; }
+        @media (max-width: 680px) {
+            .admin-form { grid-template-columns: 1fr; }
+            .admin-wide { grid-column: auto; }
+            .admin-top, .admin-doctor { align-items: flex-start; flex-direction: column; }
+            .admin-panel { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="admin-shell">
+        <header class="admin-top">
+            <div>
+                <h1>Doctor management</h1>
+                <p>Add, update, or remove doctors displayed on the clinic website.</p>
+            </div>
+            <form method="post" action="{{ url_for('admin_logout') }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button class="admin-button" type="submit">Sign out</button>
+            </form>
+        </header>
+
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="admin-message {{ category }}" role="status">{{ message }}</div>
+        {% endfor %}
+
+        <section class="admin-panel" id="doctor-form">
+            <h2>{{ "Edit doctor" if doctor else "Add a doctor" }}</h2>
+            <form class="admin-form" method="post" enctype="multipart/form-data"
+                  action="{{ url_for('edit_doctor', doctor_id=doctor.id) if doctor else url_for('add_doctor') }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <label for="name">Doctor name</label>
+                    <input id="name" name="name" maxlength="100" required value="{{ doctor.name if doctor else '' }}">
+                </div>
+                <div>
+                    <label for="specialty">Specialty</label>
+                    <input id="specialty" name="specialty" maxlength="80" required value="{{ doctor.specialty if doctor else '' }}">
+                </div>
+                <div class="admin-wide">
+                    <label for="qualifications">Qualifications and role</label>
+                    <input id="qualifications" name="qualifications" maxlength="160" required
+                           placeholder="MBBS, MD · Cardiologist" value="{{ doctor.qualifications if doctor else '' }}">
+                </div>
+                <div>
+                    <label for="years_experience">Years of experience</label>
+                    <input id="years_experience" name="years_experience" type="number" min="0" max="100" required
+                           value="{{ doctor.years_experience if doctor else '' }}">
+                </div>
+                <div>
+                    <label for="rating">Rating (0–5)</label>
+                    <input id="rating" name="rating" type="number" min="0" max="5" step="0.1" required
+                           value="{{ doctor.rating if doctor else '4.9' }}">
+                </div>
+                <div class="admin-wide">
+                    <label for="bio">Short profile</label>
+                    <textarea id="bio" name="bio" maxlength="500">{{ doctor.bio if doctor else '' }}</textarea>
+                </div>
+                <div class="admin-wide">
+                    <label for="image">Profile image</label>
+                    <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                    <span class="admin-help">JPG, PNG, or WEBP; maximum 5 MB. Leave blank to keep the current image.</span>
+                    {% if doctor and doctor.image_filename %}
+                        <img class="admin-current-image" src="{{ url_for('uploaded_image', filename=doctor.image_filename) }}" alt="Current profile image">
+                    {% endif %}
+                </div>
+                <div class="admin-wide">
+                    <button class="admin-button" type="submit">{{ "Save changes" if doctor else "Add doctor" }}</button>
+                    {% if doctor %}
+                        <a class="admin-link secondary" href="{{ url_for('admin') }}">Cancel</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <section class="admin-panel">
+            <h2>Published doctors ({{ doctors|length }})</h2>
+            {% for item in doctors %}
+                <article class="admin-doctor">
+                    <div>
+                        <div class="admin-doctor-name">{{ item.name }}</div>
+                        <div class="admin-doctor-meta">{{ item.specialty }} · {{ item.qualifications }}</div>
+                    </div>
+                    <div class="admin-actions">
+                        <a class="admin-link secondary" href="{{ url_for('edit_doctor', doctor_id=item.id) }}">Edit</a>
+                        <form class="admin-inline-form" method="post" action="{{ url_for('delete_doctor', doctor_id=item.id) }}"
+                              onsubmit="return confirm('Remove this doctor from the website?')">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            <button class="admin-link danger" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </article>
+            {% else %}
+                <p>No doctors have been added yet.</p>
+            {% endfor %}
+        </section>
+        <a class="admin-link secondary" href="/">← View website</a>
+    </main>
+</body>
+</html>

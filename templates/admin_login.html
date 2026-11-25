@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin sign in | Shivay Clinic</title>
+    <link rel="stylesheet" href="{{ url_for('stylesheet') }}">
+    <style>
+        body { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f4f8f8; }
+        .admin-login { width: min(100%, 430px); padding: 34px; border: 1px solid #e1ebed; border-radius: 18px; background: white; box-shadow: 0 18px 55px rgba(16, 47, 61, .1); }
+        .admin-login h1 { margin: 0 0 8px; color: #102f3d; font: 800 26px Manrope, sans-serif; }
+        .admin-login p { margin: 0 0 24px; color: #607780; }
+        .admin-login label, .admin-form label { display: block; margin: 14px 0 6px; color: #102f3d; font-weight: 700; }
+        .admin-login input, .admin-form input, .admin-form textarea { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #d6e2e4; border-radius: 8px; font: inherit; }
+        .admin-button { display: inline-block; margin-top: 18px; padding: 12px 18px; border: 0; border-radius: 8px; background: #087e83; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+        .admin-message { margin: 12px 0; padding: 12px; border-radius: 8px; background: #fff0ee; color: #9b3025; }
+        .admin-back { color: #087e83; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <main class="admin-login">
+        <a class="admin-back" href="/">← Shivay Clinic</a>
+        <h1>Clinic admin</h1>
+        <p>Sign in to manage the doctors shown on the website.</p>
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="admin-message" role="alert">{{ message }}</div>
+        {% endfor %}
+        <form method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required>
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <button class="admin-button" type="submit">Sign in</button>
+        </form>
+    </main>
+</body>
+</html>
